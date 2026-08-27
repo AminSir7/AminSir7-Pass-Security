@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Check</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #08090c; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #08090c; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .card { position: relative; background: #111317; border: 1px solid #1c2027; border-radius: 20px; padding: 48px 40px; text-align: center; max-width: 480px; width: 90%; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7); overflow: hidden; }
+        .ripple-wrapper { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 0; height: 0; pointer-events: none; z-index: 1; }
+        .ripple-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); width: 420px; height: 420px; border-radius: 50%; border: 1.5px solid rgba(46, 213, 115, 0.45); background: radial-gradient(circle, rgba(46, 213, 115, 0.12) 0%, rgba(46, 213, 115, 0) 65%); opacity: 0; }
+        .card.success .ripple-ring-1 { animation: ultraRipple 1.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards; }
+        .card.success .ripple-ring-2 { animation: ultraRipple 1.6s cubic-bezier(0.1, 0.8, 0.3, 1) 0.25s forwards; }
+        @keyframes ultraRipple { 0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0.9; border-width: 2px; } 50% { opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.15); opacity: 0; border-width: 1px; } }
+        .sub-header { position: relative; z-index: 2; font-size: 11px; letter-spacing: 2.5px; color: #646b79; text-transform: uppercase; margin-bottom: 12px; font-weight: 600; }
+        h2 { position: relative; z-index: 2; font-size: 26px; margin-bottom: 8px; font-weight: 600; }
+        .description { position: relative; z-index: 2; font-size: 14px; color: #646b79; margin-bottom: 36px; }
+        .otp-container { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 28px; }
+        .box-wrapper { position: relative; width: 50px; height: 58px; }
+        .otp-input { width: 100%; height: 100%; background-color: #161920; border: 1px solid #262b37; border-radius: 12px; color: #ffffff; font-size: 20px; font-weight: bold; text-align: center; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease; }
+        .otp-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .check-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.4); width: 20px; height: 20px; stroke: #2ed573; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: 0; pointer-events: none; transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease; }
+        .divider { position: relative; z-index: 2; color: #383e4d; font-size: 16px; font-weight: bold; }
+        .status-container { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; margin-bottom: 24px; min-height: 24px; color: #646b79; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; background-color: #646b79; transition: background-color 0.3s ease; }
+        .card.success .otp-input { border-color: #2ed573; background-color: rgba(46, 213, 115, 0.04); color: transparent; }
+        .card.success .check-icon { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .card.success .dot { background-color: #2ed573; }
+        .card.success .status-text { color: #2ed573; }
+        .card.error .otp-input { border-color: #ff4757; background-color: rgba(255, 71, 87, 0.08); color: #ff4757; }
+        .card.error .otp-container { animation: smoothShake 0.4s ease-in-out; }
+        .card.error .dot { background-color: #ff4757; }
+        .card.error .status-text { color: #ff4757; }
+        @keyframes smoothShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+        .tip { position: relative; z-index: 2; font-size: 13px; color: #434956; }
+    </style>
+</head>
+<body>
+    <div id="auth-overlay">
+        <div class="card" id="auth-card">
+            <div class="ripple-wrapper">
+                <div class="ripple-ring ripple-ring-1"></div>
+                <div class="ripple-ring ripple-ring-2"></div>
+            </div>
+            <div class="sub-header">Security Check</div>
+            <h2>Enter your code</h2>
+            <p class="description">We sent a 6-digit code to verify access.</p>
+            <div class="otp-container" id="otp-group">
+                <div class="box-wrapper"><input type="text" maxlength="1" class="otp-input" autofocus /><svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                <div class="box-wrapper"><input type="text" maxlength="1" class="otp-input" /><svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                <div class="box-wrapper"><input type="text" maxlength="1" class="otp-input" /><svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                <span class="divider">-</span>
+                <div class="box-wrapper"><input type="text" maxlength="1" class="otp-input" /><svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                <div class="box-wrapper"><input type="text" maxlength="1" class="otp-input" /><svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                <div class="box-wrapper"><input type="text" maxlength="1" class="otp-input" /><svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+            </div>
+            <div class="status-container">
+                <span class="dot" id="status-dot"></span>
+                <span id="status-text">Enter the 6-digit code</span>
+            </div>
+            <p class="tip">Tip: paste to fill every box at once.</p>
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('.otp-input');
+        const card = document.getElementById('auth-card');
+        const statusText = document.getElementById('status-text');
+        let isProcessing = false;
+
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (isProcessing) return;
+                if (e.target.value.length === 1 && index < inputs.length - 1) inputs[index + 1].focus();
+                checkCode();
+            });
+            input.addEventListener('keydown', (e) => {
+                if (isProcessing) return;
+                if (e.key === 'Backspace' && !input.value && index > 0) inputs[index - 1].focus();
+            });
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                if (isProcessing) return;
+                const pastedData = e.clipboardData.getData('text').trim();
+                if (/^\d{6}$/.test(pastedData)) {
+                    pastedData.split('').forEach((char, i) => { if (inputs[i]) inputs[i].value = char; });
+                    inputs[5].focus();
+                    checkCode();
+                }
+            });
+        });
+
+        async function checkCode() {
+            let currentCode = "";
+            inputs.forEach(input => currentCode += input.value);
+
+            if (currentCode.length === 6) {
+                isProcessing = true;
+                
+                try {
+                    const response = await fetch('/api/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: currentCode })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        card.className = "card success";
+                        statusText.textContent = "Code verified";
+                        
+                        setTimeout(() => {
+                            window.location.href = data.redirectUrl;
+                        }, 1200);
+                    } else {
+                        throw new Error("Invalid Code");
+                    }
+                } catch (err) {
+                    card.className = "card error";
+                    statusText.textContent = "Incorrect code, try again";
+
+                    setTimeout(() => {
+                        inputs.forEach(input => input.value = "");
+                        card.className = "card";
+                        statusText.textContent = "Enter the 6-digit code";
+                        inputs[0].focus();
+                        isProcessing = false;
+                    }, 800);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
